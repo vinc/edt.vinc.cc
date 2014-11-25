@@ -1,4 +1,7 @@
 $(function() {
+  var position;
+  var times;
+
   var metonicDate = function(date) {
     var leapYears = [2, 5, 7, 10, 13, 16, 18];
     var yearZero = 1054;
@@ -49,7 +52,7 @@ $(function() {
   }
 
   var decimalTime = function(date) {
-    var midnight = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+    var midnight = times.nadir;
     var seconds = Math.floor((+date - +midnight) / 1000);
     var centiday = Math.floor(seconds / 864);
     var beat = Math.floor(((1000 * seconds) / 864) % 1000);
@@ -62,9 +65,6 @@ $(function() {
     night: [[240, 33, 10], [225, 40, 10], [240, 20, 20]],
     twilight: [[240, 25, 35], [270, 5, 55], [20, 35, 80]]
   }
-
-  var sunrise = 27.5;
-  var sunset = 88.5;
 
   var hsl = function(args) {
     var h = args[0];
@@ -81,6 +81,9 @@ $(function() {
   var skyGradient = function(time) {
     var a = [[], [], []];
     var a0, a1, x, i, j;
+
+    var sunrise = decimalTime(times.sunrise).centiday;
+    var sunset = decimalTime(times.sunset).centiday;
 
     if (time < sunrise - 3.0) {
       x = 0;
@@ -121,22 +124,44 @@ $(function() {
     return 'linear-gradient(to bottom, ' + hsl(a[0]) + ' 0%, ' + hsl(a[1]) + ' 70%, ' + hsl(a[2]) + ' 100%)';
   }
 
-  window.setInterval(function() {
+  $(document).ready(function() {
     var date = new Date();
-    var cal = $.extend({}, metonicDate(date), decimalTime(date));
-    var time = parseFloat('' + cal.centiday + '.' + cal.beat) % 100;
+    var today = date.getDate();
 
-    $('body').css('background', skyGradient(time));
+    navigator.geolocation.getCurrentPosition(function(pos) {
+      console.log('got current position');
 
-    for (var k in cal) {
-      var v = '' + cal[k];
-      var n = (k == 'year' || k == 'beat' ? 3 : 2);
+      position = {
+        latitude: pos.coords.latitude,
+        longitude: pos.coords.longitude
+      };
 
-      while (v.length < n) {
-        v = '0' + v;
-      }
+      times = SunCalc.getTimes(date, position.latitude, position.longitude);
 
-      $('time .' + k).html(v);
-    }
-  }, 100);
+      window.setInterval(function() {
+        date = new Date();
+
+        if (today !== date.getDate()) { // new day
+          today = date.getDate();
+          times = SunCalc.getTimes(date, position.latitude, position.longitude);
+        }
+
+        var cal = $.extend({}, metonicDate(date), decimalTime(date));
+        var time = parseFloat('' + cal.centiday + '.' + cal.beat) % 100;
+
+        $('body').css('background', skyGradient(time));
+
+        for (var k in cal) {
+          var v = '' + cal[k];
+          var n = (k == 'year' || k == 'beat' ? 3 : 2);
+
+          while (v.length < n) {
+            v = '0' + v;
+          }
+
+          $('time .' + k).html(v);
+        }
+      }, 100);
+    });
+  });
 });

@@ -1,0 +1,21 @@
+{
+  "name": "edt.vinc.cc",
+  "version": "0.0.1",
+  "homepage": "https://github.com/vinc/edt.vinc.cc",
+  "authors": [
+    "Vincent Ollivier <v@vinc.cc>"
+  ],
+  "license": "MIT",
+  "private": true,
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests"
+  ],
+  "dependencies": {
+    "jquery": "~2.1.1",
+    "suncalc": "~1.6.0"
+  }
+}
